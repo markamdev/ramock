@@ -13,6 +13,7 @@ var (
 
 type EnpointHandler interface {
 	RegisterHealthCheck()
+	RegisterEndpoint(string, int) error // endpoint with method (as for ServeMux.HandleFunc) and HTTP error code number
 	StartServer(int) error
 }
 
@@ -23,6 +24,6 @@ func NewEndpointRegisterer() EnpointHandler {
 	}
 	return &endpointHandler{
 		mux:       http.NewServeMux(),
-		endpoints: map[string]bool{},
+		endpoints: map[string]int{},
 	}
 }

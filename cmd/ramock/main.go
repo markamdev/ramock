@@ -14,5 +14,12 @@ func main() {
 	opts := settings.ReadConfiguration("RAMOCK")
 	er := server.NewEndpointRegisterer()
 	er.RegisterHealthCheck()
+
+	// test code - to be removed
+	er.RegisterEndpoint("POST /test1", 201)
+	er.RegisterEndpoint("DELETE /test2", 200)
+	// test code end
+
 	er.StartServer(opts.ListenPort)
+
 }
