@@ -8,23 +8,31 @@ import (
 
 type endpointHandler struct {
 	mux       *http.ServeMux
-	endpoints map[string]int // to be changed/extended later
+	endpoints map[string]EndpointConfig
 }
 
 func (er *endpointHandler) RegisterHealthCheck() {
 	packageLogger.Info("registering /health endpoint")
-	er.mux.HandleFunc("GET /health", er.healthHandler)
-	er.endpoints["/health"] = http.StatusOK
+	er.mux.HandleFunc("GET /health", er.commonHandler)
+	er.endpoints["GET /health"] = EndpointConfig{
+		Path: "GET /health",
+		Response: ResponseData{
+			Code:        http.StatusOK,
+			Body:        []byte("{\"state\":\"running\"}"),
+			ContentType: "application/json",
+		},
+	}
 }
 
-func (er *endpointHandler) RegisterEndpoint(endpoint string, code int) error {
-	_, ok := er.endpoints[endpoint]
+func (er *endpointHandler) RegisterEndpoint(ec EndpointConfig) error {
+	_, ok := er.endpoints[ec.Path]
 	if ok {
+		packageLogger.Error("endpoint and method '%s' already registered", "endpoint", ec.Path)
 		return ErrAlreadyRegistered
 	}
 
-	er.endpoints[endpoint] = code
-	er.mux.HandleFunc(endpoint, er.commonHandler)
+	er.endpoints[ec.Path] = ec
+	er.mux.HandleFunc(ec.Path, er.commonHandler)
 	return nil
 }
 
@@ -55,12 +63,18 @@ func (er *endpointHandler) commonHandler(wr http.ResponseWriter, req *http.Reque
 	path := req.RequestURI
 	method := req.Method
 	endpoint := fmt.Sprintf("%s %s", method, path)
-	code, ok := er.endpoints[endpoint]
+	endpointConfig, ok := er.endpoints[endpoint]
 	if !ok {
-		packageLogger.Warn("unregistered uri and/or method", "uri", endpoint)
+		packageLogger.Warn("unregistered method-path pair", "endpoint", endpoint)
 		wr.WriteHeader(http.StatusNotFound)
 		return
 	}
 
-	wr.WriteHeader(code)
+	if len(endpointConfig.Response.Body) > 0 {
+		wr.Write(endpointConfig.Response.Body)
+	}
+	if len(endpointConfig.Response.ContentType) > 0 {
+		wr.Header().Set("Content-Type", endpointConfig.Response.ContentType)
+	}
+	wr.WriteHeader(endpointConfig.Response.Code)
 }
