@@ -1,7 +1,6 @@
 package server
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 )
@@ -43,22 +42,6 @@ func (er *endpointHandler) StartServer(port int) error {
 	return http.ListenAndServe(listenAddress, er.mux)
 }
 
-func (er *endpointHandler) healthHandler(wr http.ResponseWriter, req *http.Request) {
-	packageLogger.Info("/health called")
-	buf, err := json.Marshal(struct {
-		State string `json:"state"`
-	}{
-		State: "running",
-	})
-	if err != nil {
-		wr.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	wr.Write(buf)
-	wr.Header().Add("Content-Type", "application/json")
-}
-
 func (er *endpointHandler) commonHandler(wr http.ResponseWriter, req *http.Request) {
 	path := req.RequestURI
 	method := req.Method
@@ -70,11 +53,11 @@ func (er *endpointHandler) commonHandler(wr http.ResponseWriter, req *http.Reque
 		return
 	}
 
+	wr.WriteHeader(endpointConfig.Response.Code)
 	if len(endpointConfig.Response.Body) > 0 {
 		wr.Write(endpointConfig.Response.Body)
 	}
 	if len(endpointConfig.Response.ContentType) > 0 {
 		wr.Header().Set("Content-Type", endpointConfig.Response.ContentType)
 	}
-	wr.WriteHeader(endpointConfig.Response.Code)
 }
