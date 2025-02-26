@@ -17,6 +17,7 @@ type EnpointHandler interface {
 	RegisterHealthCheck()
 	RegisterEndpoint(EndpointConfig) error // endpoint with method (as for ServeMux.HandleFunc) and HTTP error code number
 	StartServer(int) error
+	ReadEndpointsFromFile(path string) error // read endpoints from file and register them
 }
 
 func NewEndpointRegisterer() EnpointHandler {

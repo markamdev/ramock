@@ -3,6 +3,9 @@ package server
 import (
 	"fmt"
 	"net/http"
+	"os"
+
+	"gopkg.in/yaml.v2"
 )
 
 type endpointHandler struct {
@@ -14,12 +17,11 @@ func (er *endpointHandler) RegisterHealthCheck() {
 	packageLogger.Info("registering /health endpoint")
 	er.mux.HandleFunc("GET /health", er.commonHandler)
 	er.endpoints["GET /health"] = EndpointConfig{
-		Path: "GET /health",
-		Response: ResponseData{
-			Code:        http.StatusOK,
-			Body:        []byte("{\"state\":\"running\"}"),
-			ContentType: "application/json",
-		},
+		Path:        "/health",
+		Method:      "GET",
+		Code:        http.StatusOK,
+		Response:    "{\"state\":\"running\"}",
+		ContentType: "application/json",
 	}
 }
 
@@ -30,8 +32,10 @@ func (er *endpointHandler) RegisterEndpoint(ec EndpointConfig) error {
 		return ErrAlreadyRegistered
 	}
 
-	er.endpoints[ec.Path] = ec
-	er.mux.HandleFunc(ec.Path, er.commonHandler)
+	epName := fmt.Sprintf("%s %s", ec.Method, ec.Path)
+	packageLogger.Info("registering endpoint", "endpoint", epName)
+	er.endpoints[epName] = ec
+	er.mux.HandleFunc(epName, er.commonHandler)
 	return nil
 }
 
@@ -45,19 +49,45 @@ func (er *endpointHandler) StartServer(port int) error {
 func (er *endpointHandler) commonHandler(wr http.ResponseWriter, req *http.Request) {
 	path := req.RequestURI
 	method := req.Method
-	endpoint := fmt.Sprintf("%s %s", method, path)
-	endpointConfig, ok := er.endpoints[endpoint]
+	epName := fmt.Sprintf("%s %s", method, path)
+	endpointConfig, ok := er.endpoints[epName]
 	if !ok {
-		packageLogger.Warn("unregistered method-path pair", "endpoint", endpoint)
+		packageLogger.Warn("unregistered method-path pair", "endpoint", epName)
 		wr.WriteHeader(http.StatusNotFound)
 		return
 	}
 
-	wr.WriteHeader(endpointConfig.Response.Code)
-	if len(endpointConfig.Response.Body) > 0 {
-		wr.Write(endpointConfig.Response.Body)
+	wr.WriteHeader(endpointConfig.Code)
+	if len(endpointConfig.Response) > 0 {
+		wr.Write([]byte(endpointConfig.Response))
 	}
-	if len(endpointConfig.Response.ContentType) > 0 {
-		wr.Header().Set("Content-Type", endpointConfig.Response.ContentType)
+	if len(endpointConfig.ContentType) > 0 {
+		wr.Header().Set("Content-Type", endpointConfig.ContentType)
 	}
+}
+
+func (er *endpointHandler) ReadEndpointsFromFile(path string) error {
+	if path == "" {
+		return ErrInvalidEndpointFile
+	}
+
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return fmt.Errorf("failed to read file: %w", err)
+	}
+
+	var endpoints []EndpointConfig
+	err = yaml.Unmarshal(data, &endpoints)
+	if err != nil {
+		return fmt.Errorf("failed to unmarshal yaml: %w", err)
+	}
+
+	for _, ec := range endpoints {
+		err = er.RegisterEndpoint(ec)
+		if err != nil {
+			return fmt.Errorf("failed to register endpoint: %w", err)
+		}
+	}
+
+	return nil
 }

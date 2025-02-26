@@ -28,3 +28,7 @@ func ReadConfiguration(prefix string) Configuration {
 		EndpointsFile: sysenvs.GetStringEnvWithDefault(nResolver.GetVarName(endpointsFile), defEndpointsFile),
 	}
 }
+
+func ReadConfigurationFromEnv() Configuration {
+	return ReadConfiguration("RAMOCK")
+}

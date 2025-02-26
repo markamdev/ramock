@@ -3,18 +3,16 @@ package server
 import "errors"
 
 var (
-	ErrAlreadyRegistered = errors.New("already registered")
+	ErrAlreadyRegistered   = errors.New("already registered")
+	ErrInvalidEndpointFile = errors.New("invalid endpoint file")
 )
 
 // EndpointConfig basic decription of supported endpoint
 // TODO expand with expected request body
 type EndpointConfig struct {
-	Path     string
-	Response ResponseData
-}
-
-type ResponseData struct {
+	Path        string
+	Method      string
 	Code        int
-	Body        []byte
+	Response    string
 	ContentType string
 }
