@@ -12,7 +12,7 @@ COPY internal ./internal
 
 RUN pwd && ls && go build -o /ramock ./cmd/ramock/main.go
 
-FROM alpine:3.14 as production-stage
+FROM alpine:3.14 AS production-stage
 
 COPY --from=build-stage /ramock /ramock
 COPY data/endpoints-example.yaml /config/endpoints.yaml
