@@ -10,13 +10,13 @@ import (
 
 type endpointHandler struct {
 	mux       *http.ServeMux
-	endpoints map[string]EndpointConfig
+	endpoints map[string]EndpointDescription
 }
 
 func (er *endpointHandler) RegisterHealthCheck() {
 	packageLogger.Info("registering /health endpoint")
 	er.mux.HandleFunc("GET /health", er.commonHandler)
-	er.endpoints["GET /health"] = EndpointConfig{
+	er.endpoints["GET /health"] = EndpointDescription{
 		Path:        "/health",
 		Method:      "GET",
 		Code:        http.StatusOK,
@@ -25,7 +25,7 @@ func (er *endpointHandler) RegisterHealthCheck() {
 	}
 }
 
-func (er *endpointHandler) RegisterEndpoint(ec EndpointConfig) error {
+func (er *endpointHandler) RegisterEndpoint(ec EndpointDescription) error {
 	_, ok := er.endpoints[ec.Path]
 	if ok {
 		packageLogger.Error("endpoint and method '%s' already registered", "endpoint", ec.Path)
@@ -76,13 +76,15 @@ func (er *endpointHandler) ReadEndpointsFromFile(path string) error {
 		return fmt.Errorf("failed to read file: %w", err)
 	}
 
-	var endpoints []EndpointConfig
-	err = yaml.Unmarshal(data, &endpoints)
+	var config ConfigData
+	err = yaml.Unmarshal(data, &config)
 	if err != nil {
 		return fmt.Errorf("failed to unmarshal yaml: %w", err)
 	}
 
-	for _, ec := range endpoints {
+	// TODO: check version compatibility
+
+	for _, ec := range config.Endpoints {
 		err = er.RegisterEndpoint(ec)
 		if err != nil {
 			return fmt.Errorf("failed to register endpoint: %w", err)

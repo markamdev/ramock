@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log/slog"
 
 	_ "github.com/markamdev/ramock/internal/logging"
@@ -9,7 +10,7 @@ import (
 )
 
 func main() {
-	slog.Info("starting REST API mocking service")
+	slog.Info(fmt.Sprintf("starting REST API mocking service (version %s)", server.RamockVersion))
 
 	opts := settings.ReadConfigurationFromEnv()
 	er := server.NewEndpointRegisterer()
