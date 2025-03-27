@@ -51,11 +51,26 @@ It is also possible to directly launch application via `go run ./cmd/ramock/main
 
 To try *ramock* without building by yourself or to use it as a part of deployment one can use pre-build container image available on DockerHub at `markamdev/ramock`.
 
-Sample launch command:
+Command below will launch *ramock* with default (sample) configuration.
 
 ```bash
-docker run markamdev/ramock:latest
+<YOUR_CONTAINER_RUNTIME> run -p 8008:8008 --name ramock markamdev/ramock:latest
 ```
+
+*\<YOUR_CONTAINER_RUNTIME\>* above will be in most cases `podman` or `docker`.
+
+To run *ramock* container with user defined configuration a folder containing *endpoints.yaml* file should be mounted to container's */config* directory:
+
+```bash
+# prepare volume directory
+mkdir ./ramockConfig
+# prepare config file (replace command below with your file fetching)
+wget https://raw.githubusercontent.com/markamdev/ramock/refs/heads/master/data/endpoints-example.yaml -O ./ramockConfig/endpoints.yaml
+# run container mounting folder as volume
+podman run -v ./ramockConfig:/config -p 8008:8008 --name ramock docker.io/markamdev/ramock
+```
+
+NOTE: Remember to have folder mounting initialized at `podman machine init` step.
 
 ## Author
 

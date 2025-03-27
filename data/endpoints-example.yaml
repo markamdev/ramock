@@ -1,23 +1,23 @@
 ramockVersion: "0.1"
 
 endpoints:
-  - path: "/notes"
+  - path: "/version"
     code: 200
     method: "GET"
-    body: '{{"uid": "a001", "title": "Test note 1"},{"uid": "a002", "title": "Test note 2"}}'
+    body: '{"version" : "0.1"}'
     contentType: "application/json"
-  - path: "/notes"
+  - path: "/register"
     code: 201
     method: "POST"
-    response: '{"uid": "a003"}'
+    response: '{"result":"registered","id": "a003", "name": "New User"}'
     contentType: "application/json"
-  - path: "/notes/a001"
+  - path: "/users"
     code: 200
     method: "GET"
-    response: '{"uid": "a001", "title": "Test note 1", "content": "This is a test note."}'
+    response: '{{"id": "a001", "name": "John X", "status": "active"},{"id": "a002", "name": "Jane Y", "status": "inactive"}}'
     contentType: "application/json"
-  - path: "/notes/a002"
+  - path: "/endpoints"
     code: 200
     method: "GET"
-    response: '{"uid": "a002", "title": "Test note 2", "content": "This is another test note."}'
+    response: '{"endpoints": ["/version", "/register", "/users", "/endpoints"]}'
     contentType: "application/json"
